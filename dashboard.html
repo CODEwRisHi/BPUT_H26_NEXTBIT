@@ -62,7 +62,7 @@
             container.innerHTML = '<p class="text-cyan-400 animate-pulse">Analyzing threat vectors...</p>';
 
             try {
-                const response = await fetch('http://localhost:8000/api/v1/analyze', {
+                const response = await fetch('https://bput-cyber-backend.onrender.com/api/v1/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ source_type: sourceType, content: content })
@@ -95,7 +95,7 @@
                     </div>
                 `;
             } catch (err) {
-                container.innerHTML = '<p class="text-red-400">Error connecting to backend server. Make sure FastAPI is running on port 8000.</p>';
+                container.innerHTML = '<p class="text-red-400">Error connecting to backend server.</p>';
             }
         }
     </script>
