@@ -1,1 +1,0 @@
-{"routes":[{"src":"/analyze","dest":"/api/index.py"},{"src":"/(.*)","dest":"/public/$1"}]}
