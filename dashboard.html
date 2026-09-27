@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberShield AI — SOC Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 p-6 font-sans">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex items-center justify-between pb-6 border-b border-slate-800 mb-8">
+            <h1 class="text-2xl font-bold tracking-wide text-cyan-400">CyberShield AI — SOC Dashboard</h1>
+            <span class="text-xs px-3 py-1 bg-cyan-950 border border-cyan-800 text-cyan-400 rounded-full">System Online</span>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Ingestion Form -->
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+                <h2 class="text-lg font-semibold mb-4 text-slate-200">Telemetry Ingestion Simulator</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Data Source Vector</label>
+                        <select id="sourceType" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-cyan-500">
+                            <option value="email">Phishing Email / Message</option>
+                            <option value="url">Malicious URL / Domain</option>
+                            <option value="auth_log">Authentication / Session Log</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">Payload Content / Log Data</label>
+                        <textarea id="content" rows="5" placeholder="Paste suspicious email text, URL, or log snippet here..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-cyan-500"></textarea>
+                    </div>
+                    <button onclick="analyzeThreat()" id="submitBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2.5 rounded-lg transition">
+                        Run AI Analysis
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold mb-4 text-slate-200">Explainable Risk Assessment</h2>
+                    <div id="resultContainer" class="text-slate-500 text-center py-16">
+                        Awaiting telemetry input. Submit a payload to generate analysis.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeThreat() {
+            const sourceType = document.getElementById('sourceType').value;
+            const content = document.getElementById('content').value;
+            const container = document.getElementById('resultContainer');
+
+            if (!content) {
+                alert('Please enter payload content');
+                return;
+            }
+
+            container.innerHTML = '<p class="text-cyan-400 animate-pulse">Analyzing threat vectors...</p>';
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ source_type: sourceType, content: content })
+                });
+                const data = await response.json();
+                const res = data.analysis;
+
+                let badgeColor = 'bg-green-600 text-white';
+                if (res.risk_level === 'Critical') badgeColor = 'bg-red-600 text-white';
+                else if (res.risk_level === 'High') badgeColor = 'bg-orange-500 text-white';
+                else if (res.risk_level === 'Medium') badgeColor = 'bg-yellow-500 text-black';
+                else if (res.risk_level === 'Low') badgeColor = 'bg-blue-500 text-white';
+
+                container.innerHTML = `
+                    <div class="space-y-4 text-left">
+                        <div class="flex items-center justify-between p-3 bg-slate-950 rounded-lg border border-slate-800">
+                            <span class="text-slate-400">Risk Level:</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase ${badgeColor}">${res.risk_level}</span>
+                        </div>
+                        <div class="p-3 bg-slate-950 rounded-lg border border-slate-800">
+                            <span class="text-slate-400 block mb-1">Calculated Score:</span>
+                            <div class="text-xl font-mono font-bold text-cyan-400">${(res.risk_score * 100).toFixed(0)}% / 100%</div>
+                        </div>
+                        <div class="p-3 bg-slate-950 rounded-lg border border-slate-800">
+                            <span class="text-slate-400 block mb-2">Explainable AI Indicators:</span>
+                            <ul class="list-disc list-inside space-y-1 text-sm text-slate-300">
+                                ${res.explanation.map(e => `<li>${e}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                container.innerHTML = '<p class="text-red-400">Error connecting to backend server. Make sure FastAPI is running on port 8000.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
